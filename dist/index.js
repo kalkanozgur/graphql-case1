@@ -5,14 +5,17 @@ const { events, locations, users, participants } = data;
 const typeDefs = `#graphql
 
   type Event {
-	id: ID
+	id: Int
 	title: String
 	desc: String
 	date: String
 	from: String
 	to: String
+	participants: [Participant]
 	location_id: Int
+	location: Location
 	user_id: Int
+	user: User 
   }
   type Location {
 	id: Int
@@ -20,33 +23,67 @@ const typeDefs = `#graphql
 	desc: String
 	lat: Float
 	lng: Float
+	events: [Event]
   }
   type User {
 	id: Int
 	username: String
 	email: String
+	events: [Event]
   }
   type Participant {
 	id: Int
 	user_id: Int
+	user: User
+	username: String
 	event_id: Int
+	event: Event
   }
 
   type Query {
-	events: [Event]
-	locations: [Location]
 	users: [User]
+	user(id:Int!): User
+
+	events: [Event]
+	event(id:Int!): Event
+
+	locations: [Location]
+	location(id:Int!): Location
+
 	participants: [Participant]
+	participant(id:Int!): Participant
   }
 `;
 // Resolvers define how to fetch the types defined in your schema.
 // This resolver retrieves books from the "books" array above.
 const resolvers = {
     Query: {
-        events: () => events,
-        locations: () => locations,
         users: () => users,
+        user: (parent, args) => users.find((user) => user.id === args.id),
+        events: () => events,
+        event: (parent, args) => events.find((event) => event.id === args.id),
+        locations: () => locations,
+        location: (parent, args) => locations.find((location) => location.id === args.id),
         participants: () => participants,
+        participant: (parent, args) => participants.find((participant) => participant.id === args.id),
+    },
+    User: {
+        events: (parent) => events.filter((event) => event.user_id === parent.id),
+    },
+    Event: {
+        location: (parent) => locations.find((location) => location.id === parent.location_id),
+        user: (parent) => users.find((user) => user.id === parent.id),
+        participants: (parent) => participants.filter((participant) => participant.event_id === parent.id),
+    },
+    Participant: {
+        user: (parent) => users.find((user) => user.id === parent.user_id),
+        event: (parent) => events.find((event) => event.id === parent.id),
+        username: (parent) => users.find((user) => user.id === parent.user_id).username,
+    },
+    Location: {
+        events: (parent) => events.filter((event) => {
+            return event.location_id === parent.id;
+        }),
     },
 };
 // The ApolloServer constructor requires two parameters: your schema
