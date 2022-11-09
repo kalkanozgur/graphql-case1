@@ -1,3 +1,7 @@
+import { ILocation } from "./Interfaces/ILocation";
+import { IParticipant } from "./Interfaces/IParticipant";
+import { IEvent } from "./Interfaces/IEvent";
+import { IUser } from "./Interfaces/IUser";
 import { ApolloServer } from "@apollo/server";
 import { startStandaloneServer } from "@apollo/server/standalone";
 
@@ -8,14 +12,17 @@ const { events, locations, users, participants } = data;
 const typeDefs = `#graphql
 
   type Event {
-	id: ID
+	id: Int
 	title: String
 	desc: String
 	date: String
 	from: String
 	to: String
+	participants: [Participant]
 	location_id: Int
+	location: Location
 	user_id: Int
+	user: User 
   }
   type Location {
 	id: Int
@@ -23,23 +30,35 @@ const typeDefs = `#graphql
 	desc: String
 	lat: Float
 	lng: Float
+	events: [Event]
   }
   type User {
 	id: Int
 	username: String
 	email: String
+	events: [Event]
   }
   type Participant {
 	id: Int
 	user_id: Int
+	user: User
+	username: String
 	event_id: Int
+	event: Event
   }
 
   type Query {
-	events: [Event]
-	locations: [Location]
 	users: [User]
+	user(id:Int!): User
+
+	events: [Event]
+	event(id:Int!): Event
+
+	locations: [Location]
+	location(id:Int!): Location
+
 	participants: [Participant]
+	participant(id:Int!): Participant
   }
 `;
 
@@ -47,10 +66,41 @@ const typeDefs = `#graphql
 // This resolver retrieves books from the "books" array above.
 const resolvers = {
 	Query: {
-		events: () => events,
-		locations: () => locations,
 		users: () => users,
+		user: (args: { id: number }) => users.find((user) => user.id === args.id),
+
+		events: () => events,
+		event: (args: { id: number }) =>
+			events.find((event) => event.id === args.id),
+
+		locations: () => locations,
+		location: (args: { id: number }) =>
+			locations.find((location) => location.id === args.id),
+
 		participants: () => participants,
+		participant: (args: { id: number }) =>
+			participants.find((participant) => participant.id === args.id),
+	},
+	User: {
+		events: (parent: IUser) =>
+			events.filter((event) => event.user_id === parent.id),
+	},
+	Event: {
+		location: (parent: IEvent) =>
+			locations.find((location) => location.id === parent.location_id),
+		user: (parent: IEvent) => users.find((user) => user.id === parent.id),
+		participants: (parent: IEvent) =>
+			participants.filter((participant) => participant.event_id === parent.id),
+	},
+	Participant: {
+		event: (parent: IParticipant) =>
+			events.find((event) => event.id === parent.id),
+		username: (parent: IParticipant) =>
+			users.find((user) => user.id === parent.user_id).username,
+	},
+	Location: {
+		events: (parent: ILocation) =>
+			events.filter((event) => event.location_id === parent.id),
 	},
 };
 

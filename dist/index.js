@@ -59,13 +59,13 @@ const typeDefs = `#graphql
 const resolvers = {
     Query: {
         users: () => users,
-        user: (parent, args) => users.find((user) => user.id === args.id),
+        user: (args) => users.find((user) => user.id === args.id),
         events: () => events,
-        event: (parent, args) => events.find((event) => event.id === args.id),
+        event: (args) => events.find((event) => event.id === args.id),
         locations: () => locations,
-        location: (parent, args) => locations.find((location) => location.id === args.id),
+        location: (args) => locations.find((location) => location.id === args.id),
         participants: () => participants,
-        participant: (parent, args) => participants.find((participant) => participant.id === args.id),
+        participant: (args) => participants.find((participant) => participant.id === args.id),
     },
     User: {
         events: (parent) => events.filter((event) => event.user_id === parent.id),
@@ -76,14 +76,11 @@ const resolvers = {
         participants: (parent) => participants.filter((participant) => participant.event_id === parent.id),
     },
     Participant: {
-        user: (parent) => users.find((user) => user.id === parent.user_id),
         event: (parent) => events.find((event) => event.id === parent.id),
         username: (parent) => users.find((user) => user.id === parent.user_id).username,
     },
     Location: {
-        events: (parent) => events.filter((event) => {
-            return event.location_id === parent.id;
-        }),
+        events: (parent) => events.filter((event) => event.location_id === parent.id),
     },
 };
 // The ApolloServer constructor requires two parameters: your schema
