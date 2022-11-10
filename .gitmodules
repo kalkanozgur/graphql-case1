@@ -1,0 +1,3 @@
+[submodule "patika.dev"]
+	path = patika.dev
+	url = https://github.com/kalkanozgur/patika.dev.git
